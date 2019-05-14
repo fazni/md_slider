@@ -1,0 +1,35 @@
+{% if not layer.opacity is  empty %}
+<div class="md-item-opacity"  style="{{ layer.opacity }}">
+{% endif %}
+    <div class="{{ class }}" {{ attributes }}>
+    {%  if layer.link.target %}
+        {% set target = 'target="' ~ layer.link.target ~ '"' %}
+    {%  endif %}
+    {% if layer.type == 'text' %}
+
+        {% if link %}
+            <a href="{{ link }}" {{ target }}>
+                {{ layer.title }}
+            </a>
+        {% else %}
+            {{ layer.title|raw }}
+        {% endif %}
+
+    {% elseif layer.type == 'image' %}
+        {% if link %}
+        <a href="{{ link }}" {{ target }}>
+            <img src="{{ layer.url }}" alt="{{ layer.title|raw }}" />
+        </a>
+        {% else %}
+            <img src="{{ layer.url }}" alt="{{ layer.title|raw }}" />
+        {% endif %}
+    {% elseif layer.type == 'video' %}
+        <a title="{{ layer.title|raw }}" class="md-video" href="{{ layer.url }}">
+            <img src="{{ layer.thumb }}" alt="{{ layer.title|raw }}"/>
+            <span class="md-playbtn"></span>
+        </a>
+    {% endif %}
+    </div>
+{% if not layer.opacity is  empty %}
+</div>
+{% endif %}

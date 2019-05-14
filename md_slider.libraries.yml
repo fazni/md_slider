@@ -1,0 +1,59 @@
+md_slider.front:
+  # Add css file
+  css:
+      component:
+        assets/css/animate.css: {}
+        assets/css/md-slider.css: {}
+        assets/css/md-slider-style.css: {}
+  # Add js files
+  js:
+    assets/js/libraries/jquery.touchwipe.js: {}
+    assets/js/libraries/modernizr.js: {}
+    assets/js/libraries/jquery.easing.js: {}
+    assets/js/libraries/jquery-migrate-1.2.1.min.js: {}
+    assets/js/frontend/md-slider.js: {}
+    assets/js/frontend/init-md-slider.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+
+md_slider.admin:
+  # Add css file.
+  css:
+    component:
+      assets/js/libraries/spectrum/spectrum.css: {}
+      assets/css/md-slider-admin.css: {}
+      assets/css/md-slider-style.css: {}
+  # Add js files.
+  js:
+    assets/js/libraries/jquery-migrate-1.2.1.min.js: {}
+    assets/js/libraries/spectrum/spectrum.js: {}
+    assets/js/libraries/preview_transition/js/md-slider-min.js: {}
+    assets/js/admin/mdslider.js: {}
+    assets/js/admin/md-slider-lib.js: {}
+    assets/js/admin/md-slider-toolbar.js: {}
+    assets/js/admin/md-slider-timeline.js: {}
+    assets/js/admin/md-slider-panel.js: {}
+    assets/js/admin/md-slider-admin-edit.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/drupal.ajax
+    - core/jquery.once
+    - core/drupal.dialog
+    - core/jquery.ui.tabs
+    - core/jquery.ui.sortable
+    - core/jquery.ui.draggable
+    - core/jquery.ui.droppable
+
+md_slider.configure:
+  css:
+    component:
+      assets/css/md-slider-admin.css: {}
+  js:
+    assets/js/admin/md-slider-admin-configure.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings

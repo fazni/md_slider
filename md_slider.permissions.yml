@@ -1,0 +1,4 @@
+administer md slider:
+  title: 'Administer MDSlider'
+  description: 'Allow to configure, edit and delete MDSliders.'
+  restrict access: TRUE

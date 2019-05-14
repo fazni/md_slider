@@ -1,0 +1,35 @@
+# Define the 'local' links for the module
+
+md_slider.admin:
+  route_name: md_slider.admin
+  base_route: md_slider.admin
+  title: MD Slider
+
+md_slider.add:
+  route_name: md_slider.admin.add
+  base_route: md_slider.admin
+  title: Add
+md_slider.import:
+  route_name: md_slider.admin.import
+  base_route: md_slider.admin
+  title: Import
+md_slider.export:
+  route_name: md_slider.admin.export
+  base_route: md_slider.admin
+  title: Export
+
+md_slider.configure:
+  title: Settings
+  route_name: md_slider.admin.configure
+  base_route: md_slider.admin.configure
+
+md_slider.configure_edit:
+  title: Edit
+  route_name: md_slider.admin.edit
+  base_route: md_slider.admin.configure
+
+md_slider.configure_delete:
+  title: Delete
+  route_name: md_slider.admin.delete
+  base_route: md_slider.admin.configure
+

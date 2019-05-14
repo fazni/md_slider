@@ -1,0 +1,21 @@
+{% for layer in layers %}
+    {% if layer.type == 'text' %}
+        <div class="slider-item ui-widget-content item-text ui-draggable ui-resizable" {{ layer.layer_data|raw  }} style="{{ layer.layer_style|raw }}">
+            <div>{{ layer.title|raw }}</div>
+            <span class="sl-tl"></span><span class="sl-tr"></span><span class="sl-bl"></span><span class="sl-br"></span>
+            <span class="sl-top"></span><span class="sl-right"></span><span class="sl-bottom"></span><span class="sl-left"></span>
+        </div>
+    {% elseif layer.type == 'image' %}
+        <div class="slider-item ui-widget-content item-image ui-draggable ui-resizable" {{ layer.layer_data|raw  }} style="{{ layer.layer_style }}">
+            <img width="100%" height="100%" src="{{ layer.file_url }}" />
+            <span class="sl-tl"></span><span class="sl-tr"></span><span class="sl-bl"></span><span class="sl-br"></span>
+            <span class="sl-top"></span><span class="sl-right"></span><span class="sl-bottom"></span><span class="sl-left"></span>
+        </div>
+    {% elseif layer.type == 'video' %}
+        <div class="slider-item ui-widget-content item-video ui-draggable ui-resizable" {{ layer.layer_data|raw  }} style="{{ layer.layer_style }}">
+            <img width="100%" height="100%" src="{{ layer.thumb }}" />
+            <span class="sl-tl"></span><span class="sl-tr"></span><span class="sl-bl"></span><span class="sl-br"></span>
+            <span class="sl-top"></span><span class="sl-right"></span><span class="sl-bottom"></span><span class="sl-left"></span>
+        </div>
+    {% endif %}
+{% endfor %}

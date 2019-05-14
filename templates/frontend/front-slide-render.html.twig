@@ -1,0 +1,21 @@
+{% if settings.disabled != 1 %}
+<div class="md-slide-item {{ index }}" {{ attributes }}>
+<div class="md-main-img" style="{{ background_style }}">
+
+    {% if background_url %}
+        <img src="{{ background_url }}" alt="{{ settings.background_image_alt|raw }}" {{ background_style }} />
+    {% endif %}
+
+</div>
+{% if settings.background_overlay  %}
+<div class="md-slider-overlay" style="background: {{ settings.background_overlay }}">
+</div>
+{% endif %}
+<div class="md-objects">
+    {% for contentLayer in contentLayers %}
+        {{ contentLayer }}
+    {% endfor %}
+</div>
+</div>
+{% endif %}
+

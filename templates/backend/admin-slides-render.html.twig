@@ -1,0 +1,78 @@
+{% set fullWidth = 'md-fullwidth' %}
+{% if not settings.full_width %}
+    {% set wrapWidth = 'width:' ~  settings.width ~ 'px;' %}
+    {% set fullWidth = '' %}
+{% endif %}
+
+{% if settings.dmf_google %}
+<link href="{{settings.dmf_google}}" rel="stylesheet">
+{% endif %}
+
+{% if slides|length > 0  %}
+<div id="md-tabs">
+    <div class="md-tab-tools">
+        <ul class="md-tabs-head clearfix">
+            {% for i in range(1, slides|length) %}
+            <li class="tab-item clearfix">
+                <a class="tab-link" href="#tabs-{{ i }}"><span class="thumb-disable"></span><span class="tab-text">Slide {{ i }}</span></a>
+                <span class="ui-icon ui-icon-close">Remove Tab</span>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="add-tab">
+            <a id="add_tab" class="add" href="#">+</a>
+        </div>
+    </div>
+    {% for slide in slides %}
+
+    <div id="tabs-{{ loop.index }}" class="md-tabcontent clearfix" data-timelinewidth="{{ slide.slideSettings.timelinewidth }}">
+        <div class="settings">
+            <a href="#" class="panel-settings-link">[Settings]</a> &nbsp;
+            <a class="panel-clone" href="#">[Clone slide]</a>
+            <input type="hidden" autocomplete="off" class="panelsettings" value='{{ slide.jsonSlideSettings }}' />
+        </div>
+        <div class="md-slidewrap {{ fullWidth }}" style="height: {{ settings.height }}px; {{ wrapWidth }}">
+            <div class="md-slide-image" style="{{ slide.background_style|join('; ') }}">
+                {% if slide.background_url  %}
+                    <img src="{{ slide.background_url }}" />
+                {% endif %}
+            </div>
+            {% if slide.slideSettings.background_overlay and slide.slideSettings.background_overlay != ''  %}
+                <div class="md-slide-overlay" style="background: {{ slide.slideSettings.background_overlay }}">
+                </div>
+            {% endif %}
+            <div class="md-objects" style="width: {{ settings.width }}px; height: {{ settings.height }}px;">
+                {{ slide.contentLayer }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else  %}
+<div id="md-tabs">
+    <div class="md-tab-tools">
+        <ul class="md-tabs-head clearfix">
+            <li class="tab-item first clearfix">
+                <a class="tab-link" href="#tabs-1"><span class="thumb-disable"></span><span class="tab-text">Slide 1</span></a>
+                <span class="ui-icon ui-icon-close">Remove Tab</span>
+            </li>
+        </ul>
+        <div class="add-tab">
+            <a id="add_tab" class="add" href="#">+</a>
+        </div>
+    </div>
+    <div id="tabs-1" class="md-tabcontent clearfix" data-timelinewidth="{{ settings.delay / 100 }}">
+        <div class="settings">
+            <a href="#" class="panel-settings-link">[Settings]</a> &nbsp;
+            <a class="panel-clone" href="#">[Clone slide]</a>
+            <input type="hidden" autocomplete="off" class="panelsettings" value='{"slide_id": -1, "background_image": -1, "custom_thumbnail": -1, "transitions": [], "background_color": "", "disabled": 0}' /></div>
+        <div class="md-slidewrap {{ fullWidth }}" style="height: {{ settings.height }}px; {{ wrapWidth }}">
+            <div class="md-slide-image" style="height: {{ settings.height }}px; {{ wrapWidth }}"></div>
+            <div class="md-slide-overlay">
+            </div>
+            <div class="md-objects" style="width: {{ settings.width }}px; height: {{ settings.height }}px;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endif  %}

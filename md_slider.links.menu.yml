@@ -1,0 +1,20 @@
+md_slider.admin:
+  title: 'Mega Slider'
+  description: 'List of Mega Sider items'
+  parent: system.admin_structure
+  route_name: md_slider.admin
+md_slider.add:
+  title: 'Add Mega Slider'
+  description: 'Add new Mega Slider'
+  parent: md_slider.admin
+  route_name: md_slider.admin.add
+md_slider.import:
+  title: 'Import Mega Slider'
+  description: 'Import MegaSlider from file zip'
+  parent: md_slider.admin
+  route_name: md_slider.admin.import
+md_slider.export:
+  title: 'Export MegaSlider'
+  description: 'Export MegaSlider to file zip to store'
+  parent: md_slider.admin
+  route_name: md_slider.admin.export

@@ -1,0 +1,87 @@
+md_slider.admin:
+  path: '/admin/structure/md-slider'
+  defaults:
+    _title: 'Mega Slider'
+    _controller: '\Drupal\md_slider\Controller\MDSliderController::listMDSlider'
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.add:
+  path: '/admin/structure/md-slider/add'
+  defaults:
+    _title: 'Add New Slider'
+    _form: '\Drupal\md_slider\Form\MDSliderConfigForm'
+  requirements:
+    _permission: 'administer md slider'
+
+md_slider.admin.configure:
+  path: '/admin/structure/md-slider/{slider}'
+  defaults:
+    _title: 'Config Slider'
+    _controller: '\Drupal\md_slider\Controller\MDSliderController::configMDSlider'
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.edit:
+  path: '/admin/structure/md-slider/{slider}/edit'
+  defaults:
+    _title: 'Edit Slider'
+    _controller: '\Drupal\md_slider\Controller\MDSliderController::editMDSlider'
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.delete:
+  path: '/admin/structure/md-slider/{slider}/delete'
+  defaults:
+    _title: 'Delete Slider'
+    _form: '\Drupal\md_slider\Form\MDSliderDeleteForm'
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.clone:
+  path: '/admin/structure/md-slider/{slider}/clone'
+  defaults:
+    _title: 'Delete Slider'
+    _form: '\Drupal\md_slider\Form\MDSliderCloneForm'
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.json_response:
+  path: 'md-slider/json-response'
+  defaults:
+      _title: 'Get Background Slider'
+      _controller: '\Drupal\md_slider\Controller\MDSliderController::jsonResponse'
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.html_response:
+  path: 'md-slider/html-response'
+  defaults:
+      _title: 'Get Background Slider'
+      _controller: '\Drupal\md_slider\Controller\MDSliderController::htmlResponse'
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.image:
+  path: '/md-slider/image'
+  defaults:
+    _form: '\Drupal\md_slider\Form\MDSliderImageForm'
+    _title: 'Add Image'
+  options:
+    _theme: ajax_base_page
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.export:
+  path: '/admin/structure/md-slider/export'
+  defaults:
+    _form: '\Drupal\md_slider\Form\MDSliderExportForm'
+    _title: 'Export Slider'
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.import:
+  path: '/admin/structure/md-slider/import'
+  defaults:
+    _form: '\Drupal\md_slider\Form\MDSliderImportForm'
+    _title: 'Export Slider'
+  requirements:
+    _permission: 'administer md slider'
+md_slider.admin.getfile:
+  path: '/admin/structure/md-slider/get-file'
+  defaults:
+    _title: 'Get file'
+    _controller: 'Drupal\md_slider\Controller\MDSliderController::getFile'
+  requirements:
+    _permission: 'administer md slider'

@@ -1,0 +1,547 @@
+<?php
+
+/**
+ * @file
+ * Contains md_slider.module..
+ */
+
+use Drupal\Component\Serialization\Json;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+use Drupal\md_slider\MDCommon;
+use Drupal\md_slider\MDSliderDataBase;
+use Drupal\file\Entity\File;
+use Drupal\Core\Template\Attribute;
+use Drupal\image\Entity\ImageStyle;
+
+/**
+ * Implements hook_help().
+ */
+function md_slider_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the md_slider module.
+    case 'help.page.md_slider':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('My Awesome Module') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+function md_slider_page_attachments(array &$attachments) {
+}
+/**
+ * Implements hook_theme().
+ */
+function md_slider_theme($existing, $type, $theme, $path) {
+  $theme = [];
+
+  $theme['slider_edit_form'] = array(
+    'variables' => array(
+      'slid' => NULL,
+      'settings' => NULL,
+    ),
+    'path' => $path . '/templates/backend',
+  );
+
+  $theme['admin_slides_render'] = array(
+    'variables' => array(
+      'slid' => NULL,
+      'settings' => NULL,
+      'slides' => NULL
+    ),
+    'path' => $path . '/templates/backend',
+  );
+
+  $theme['admin_layers_render'] = array(
+    'variables' => array(
+      'layers' => NULL
+    ),
+    'path' => $path . '/templates/backend',
+  );
+
+  $theme['slide_settings'] = array(
+    'variables' => array(),
+    'path' => $path . '/templates/backend',
+  );
+
+  $theme['video_setting_form'] = array(
+    'variables' => array(
+      'show_change' => NULL,
+    ),
+    'path' => $path . '/templates/backend',
+  );
+
+
+  //Frontend
+  $theme['md_slider'] = array(
+    'variables' => array(
+      'slider_name' => NULL,
+      'slid' => NULL,
+      'settings' => NULL,
+    ),
+    'path' => $path . '/templates/frontend',
+  );
+
+  $theme['front_slide_render'] = array(
+    'variables' => array(
+      'settings' => NULL,
+      'layers' => NULL,
+      'index' => NULL,
+      'slider_settings' => NULL,
+      'slid' => NULL,
+      'sid' => NULL
+    ),
+    'path' => $path . '/templates/frontend',
+  );
+
+  $theme['front_layers_render'] = array(
+    'variables' => array(
+      'layer' => NULL,
+      'index' => NULL,
+      'video_on_lightbox' => NULL,
+    ),
+    'path' => $path . '/templates/frontend',
+  );
+
+
+  return $theme;
+}
+
+
+function template_preprocess_slide_settings(&$vars) {
+  global $base_url;
+  $path = drupal_get_path('module', 'md_slider');
+  $vars['preview_1'] = $base_url . '/' . $path . '/assets/images/preview-transition-1.jpg';
+  $vars['preview_2'] = $base_url . '/' . $path . '/assets/images/preview-transition-2.jpg';
+}
+
+function template_preprocess_slider_edit_form(&$vars) {
+  $slid = $vars['slid'];
+  $settings = $vars['settings'];
+  $entry = array(
+    'slid' => $slid
+  );
+  $sort = array(
+    'position' => 'ASC'
+  );
+  $slides = MDSliderDataBase::loadAll('md_slides', $entry, $sort);
+  $google_fonts = $settings['dmf_google'];
+  if ($google_fonts != '') {
+    $fonts = MDCommon::getGoogleWebFont($google_fonts);
+    $vars['fonts'] = $fonts;
+  }
+  else {
+    $vars['fonts'] = array();
+  }
+  $vars['in_effect'] = MDCommon::$in_effects;
+  $vars['out_effect'] = MDCommon::$out_effects;
+  $vars['slides'] = array(
+    '#theme' => 'admin_slides_render',
+    '#slid' => $slid,
+    '#settings' => $settings,
+    '#slides' => $slides
+  );
+
+}
+
+function template_preprocess_admin_slides_render(&$vars) {
+  $slides = $vars['slides'];
+  $settings = $vars['settings'];
+
+  foreach ($slides as $index => $slide) {
+    $slide->slideSettings = unserialize($slide->settings);
+    $slide->slideSettings += array('slide_id' => $slide->sid);
+    $slide->jsonSlideSettings = JSON::encode($slide->slideSettings);
+    $slide->contentLayer = array(
+      '#theme' => 'admin_layers_render',
+      '#layers' => unserialize($slide->layers)
+    );
+    if ($slide->slideSettings['background_image'] != -1) {
+      $file = File::load($slide->slideSettings['background_image']);
+      if ($file) {
+        $url = file_create_url($file->getFileUri()); //$file->url();
+        $slide->background_url = $url;
+        if ($settings['create_bg_imgstyle'] && $settings['bg_style'] != 'none')
+          $slide->background_url = ImageStyle::load($settings['bg_style'])->buildUrl($file->getFileUri());
+      }
+    }
+    $slide->background_style = array("height: {$settings["height"]}px");
+    if (!$settings["full_width"]) {
+      $slide->background_style[] = "width:{$settings["width"]}px";
+    }
+    if (empty($slide->background_url) && isset($slide->slideSettings['background_color']) && $slide->slideSettings['background_color'] != "") {
+      $slide->background_style[] = "background-color: {$slide->slideSettings['background_color']}";
+    }
+    $slides[$index] = $slide;
+  }
+  $slides = $vars['slides'];
+}
+
+/**
+ * @param $vars
+ */
+function template_preprocess_admin_layers_render(&$vars) {
+  $layers = $vars['layers'];
+  foreach ($layers as $index => $layer) {
+    $data = array();
+    foreach ($layer as $attr => $value) {
+      if ($attr == 'link') {
+        $link_val = Json::encode($value);
+        $data[] = "data-link='{$link_val}'";
+        continue;
+      }
+      if ($attr == 'thumb' && !empty($value) && isset($layer['fileid'])) {
+        $image = File::load($layer['fileid']);
+        if ($image) {
+          $thumb = file_create_url($image->getFileUri()); //$image->url();
+          $data[] = "data-thumb='{$thumb}'";
+        }
+        else {
+          $data[] = "data-thumb=''";
+        }
+        continue;
+      }
+      if ($attr == "title") {
+        $value = htmlentities($value, ENT_QUOTES, "UTF-8");
+      }
+      $data[] = "data-{$attr}=\"{$value}\"";
+    }
+    $layer['layer_data'] = implode(' ', $data);
+
+    if ($layer['type'] == 'image') {
+      $layer['file_url'] = '';
+      if (isset($layer['fileid'])) {
+        if ($image = File::load($layer['fileid'])) {
+          $layer['file_url'] = file_create_url($image->getFileUri()); //$image->url();
+        }
+      }
+    }
+
+    $style = array();
+    $style[] = "z-index: {$layer['zindex']};";
+    $style[] = "width: {$layer['width']}px;";
+    $style[] = "height: {$layer['height']}px;";
+    $style[] = "top: {$layer['top']}px;";
+    $style[] = "left: {$layer['left']}px;";
+
+    if ($layer["type"] == "text" && isset($layer["fontweight"]) && $layer["fontweight"] != "") {
+      if (is_numeric($layer["fontweight"]) === FALSE) {
+        $font_w = substr($layer["fontweight"], 0, 3);
+        $font_s = substr($layer["fontweight"], 3);
+        if($font_s === 'i')
+          $font_s = 'italic';
+        $style[] = "font-weight: {$font_w};\n";
+        $style[] = "font-style: {$font_s};\n";
+      }
+      else {
+        $style[] = "font-weight: {$layer["fontweight"]};\n";
+      }
+    }
+    $layer['layer_style'] = implode(' ', $style);
+    $layers[$index] = $layer;
+  }
+
+  $vars['layers'] = $layers;
+}
+
+function template_preprocess_md_slider(&$vars) {
+  $settings = $vars['settings'];
+  $entry = array(
+    'slid' => $vars['slid']
+  );
+  $sort = array(
+    'position' => 'ASC'
+  );
+  $slides = MDSliderDataBase::loadAll('md_slides', $entry, $sort);
+  $contentSlides = array();
+  $contentSlides[] = [
+    '#attached' => [
+      'library' => "md_slider/md_slider.slider.{$vars['slider_name']}"
+    ]
+  ];
+  foreach ($slides as $index => $slide) {
+    $contentSlides[] = array(
+      '#theme' => 'front_slide_render',
+      '#index' => 'md-layer-' . $vars['slid'] . '-' . $slide->sid,
+      '#slider_settings' => $settings,
+      '#slid' => $vars['slid'],
+      '#settings' => unserialize($slide->settings),
+      '#layers' => unserialize($slide->layers),
+    );
+  }
+  $vars['contentSlides'] = $contentSlides;
+  $vars['attributes']['style'] = 'min-height:' . $settings['height'] . 'px';
+  
+  $style = ImageStyle::load($settings['thumb_style']);
+  $effects = $style->get('effects'); 
+  foreach($effects as $effect){
+    if(isset($effect['data']) && isset($effect['data']['width'])){
+      $vars['attributes']['data-thumb-height'] = $effect['data']['height'];
+      $vars['attributes']['data-thumb-width'] = $effect['data']['width'];
+      break;
+    }
+  }  
+}
+
+function template_preprocess_front_slide_render(&$vars) {
+  $settings = $vars['settings'];
+  $slider_settings = $vars['slider_settings'];
+  $layers = $vars['layers'];
+  $contentLayers = array();
+  $thumb_style = $slider_settings['thumb_style'];
+  foreach ($layers as $index => $layer) {
+    $contentLayers[] = array(
+      '#theme' => 'front_layers_render',
+      '#index' => $vars['index'] . '-' . $index,
+      '#layer' => $layer,
+      '#video_on_lightbox' => $slider_settings['videobox']
+    );
+  }
+  $vars['contentLayers'] = $contentLayers;
+  $vars['attributes']['data-timeout'] = $settings['timelinewidth'] . '00';
+  // Add data for slide settings thumbnail alt and background image alt
+  if (!isset($settings["background_image_alt"])) {
+    $settings["background_image_alt"] = "";
+  }
+  if (!isset($settings["custom_thumbnail_alt"])) {
+    $settings["custom_thumbnail_alt"] = "";
+  }
+  // Add data transitions for slide
+  if (!empty($settings["transitions"])) {
+    $vars['attributes']['data-transition'] = implode(",", $settings["transitions"]);
+  }
+  $vars['background_style'] = "";
+  if ($settings['background_image'] != -1 && ($background = File::load($settings['background_image']))) {
+    // Load background image
+    $vars['background_url'] = file_create_url($background->getFileUri()); //$background->url();
+    if ($slider_settings['create_bg_imgstyle'] && $slider_settings['bg_style'] != 'none') {
+      $vars['background_url'] = ImageStyle::load($slider_settings['bg_style'])->buildUrl($background->getFileUri());
+    }
+    // Load thumbnail image
+    $thumb = $background;
+
+    if ($settings['custom_thumbnail'] != -1) {
+      $thumb = File::load($settings['custom_thumbnail']);
+    }
+    if ($thumb_style == 'none')
+      $data_thumb = file_create_url($thumb->getFileUri()); //$thumb->url();
+    else
+      $data_thumb = ImageStyle::load($thumb_style)->buildUrl($thumb->getFileUri());
+    if ($data_thumb)
+      $vars['attributes']['data-thumb'] = $data_thumb;
+
+    // Load thumbnail alt
+    $thumb_alt = isset($settings["background_image_alt"]) ? $settings["background_image_alt"] : "";
+    if (isset($settings["custom_thumbnail_alt"])) {
+      $thumb_alt = $settings["custom_thumbnail_alt"];
+    }
+
+    $vars['attributes']['data-thumb-type'] = 'image';
+    $vars['attributes']['data-thumb-alt'] = $thumb_alt;
+  }
+  else {
+    // use background color
+    if (!$slider_settings["responsive"]) {
+      $style = array("height: {$slider_settings["height"]}px");
+    }
+    else {
+      $style = array("height: 100%");
+    }
+
+    if (!$slider_settings["full_width"] && !$slider_settings["responsive"]) {
+      $style[] = "width: {$vars["slider_settings"]["width"]}px";
+    }
+    else {
+      $style[] = "width: 100%";
+    }
+
+    if ($settings["background_color"] != "") {
+      if (strpos($settings["background_color"], "rgba") !== FALSE) {
+        $color = explode(",", $settings["background_color"]);
+        unset($color["3"]);
+        $color = implode(",", $color) . ")";
+        $color = str_replace("rgba", "rgb", $color);
+        $style[] = "background-color: {$color}";
+      }
+      $style[] = "background-color: {$settings["background_color"]}";
+    }
+    $vars['background_style'] = implode("; ", $style);
+
+    if ($settings['custom_thumbnail'] != -1) {
+      if ($thumb = File::load($settings['custom_thumbnail'])) {
+        if ($thumb_style == 'none')
+          $data_thumb = file_create_url($thumb->getFileUri()); //$thumb->url();
+        else
+          $data_thumb = ImageStyle::load($thumb_style)->buildUrl($thumb->getFileUri());
+
+        // Process data for thumbnail alt
+        $thumb_alt = "";
+        if (isset($settings["custom_thumbnail_alt"]) && $settings["custom_thumbnail_alt"]) {
+          $thumb_alt = $settings["custom_thumbnail_alt"];
+        }
+        $vars['attributes']['data-thumb-alt'] = $thumb_alt;
+        if ($data_thumb)
+          $vars['attributes']['data-thumb'] = $data_thumb;
+      }
+    }
+    else {
+      $vars['attributes']['data-thumb-type'] = 'color';
+      $thumb_height = '75';
+      $thumb_width = '100';
+      if ($thumb_style != 'none'){
+        $effect = ImageStyle::load($slider_settings['thumb_style'])->getEffects()->getConfiguration();
+        foreach ($effect as $index => $item) {
+          if (isset($item['data']['width']))
+            $thumb_height = $item['data']['width'];
+          if (isset($item['data']['height']))
+            $thumb_height = $item['data']['height'];
+        }
+      }
+
+      $thumb_data = array(
+        "height: {$thumb_height}px",
+        "width: {$thumb_width}px",
+      );
+
+      if ($settings["background_color"] != "") {
+        if (strpos($settings["background_color"], "rgba") !== FALSE) {
+          $color = explode(",", $settings["background_color"]);
+          unset($color["3"]);
+          $color = implode(",", $color) . ")";
+          $color = str_replace("rgba", "rgb", $color);
+          $thumb_data[] = "background-color: {$color}";
+        }
+        $thumb_data[] = "background-color: {$settings["background_color"]}";
+      }
+
+      $thumb_data = implode("; ", $thumb_data);
+      $vars['attributes']['data-thumb'] = $thumb_data;
+    }
+  }
+
+  $vars['elements_height'] = $vars['slider_settings']['height'];
+}
+
+
+function template_preprocess_front_layers_render(&$vars) {
+  $layer = $vars['layer'];
+  if (!isset($layer{"title"})) {
+    $layer["title"] = "";
+  }
+
+  // create data attributes for layer
+  $element_full = array_merge(MDCommon::$default_layers[$layer['type']], $layer);
+
+  $vars['starttime'] = $element_full['starttime'];
+  $vars['stoptime'] = $element_full['stoptime'];
+
+  $vars['attributes']['data-x'] = $element_full['left'];
+  $vars['attributes']['data-y'] = $element_full['top'];
+  $vars['attributes']['data-width'] = $element_full['width'];
+  $vars['attributes']['data-height'] = $element_full['height'];
+  $vars['attributes']['data-start'] = $element_full['starttime'];
+  $vars['attributes']['data-stop'] = $element_full['stoptime'];
+  if ($element_full['startani'] != 'none' && $element_full['startani'] != '') {
+    $vars['attributes']['data-easein'] = $element_full['startani'];
+  }
+  if ($element_full['stopani'] != 'none' && $element_full['stopani'] != '') {
+    $vars['attributes']['data-easeout'] = $element_full['stopani'];
+  }
+  if (isset($element_full['paddingtop'])) {
+    $vars['attributes']['data-paddingtop'] = $element_full['paddingtop'];
+  }
+  if (isset($element_full['paddingright'])) {
+    $vars['attributes']['data-paddingright'] = $element_full['paddingright'];
+  }
+  if (isset($element_full['paddingbottom'])) {
+    $vars['attributes']['data-paddingbottom'] = $element_full['paddingbottom'];
+  }
+  if (isset($element_full['paddingleft'])) {
+    $vars['attributes']['data-paddingleft'] = $element_full['paddingleft'];
+  }
+
+
+  # Get image url for image layer
+  if ($layer['type'] == 'image') {
+    $layer['url'] = '';
+    if (isset($layer['fileid'])) {
+      $image = File::load($layer['fileid']);
+      if ($image) {
+        $layer['url'] = file_create_url($image->getFileUri()); //$image->url();
+      }
+    }
+  }
+
+  if ($layer['type'] == 'video') {
+    $layer['url'] = MDCommon::getVideoUrl($layer['fileid']);
+    $display_mode = isset($layer['displayMode']) ? $layer['displayMode'] : ($vars['video_on_lightbox'] ? 'lightbox' : 'inline');
+    $vars['attributes']['data-display'] = $display_mode;
+  }
+
+  $class = array('md-object', $vars['index']);
+  if (isset($layer['style']) && $layer['style'] != 'none') {
+    $class[] = $layer['style'];
+  }
+  if (isset($layer['mdtclass']) && $layer['mdtclass'] != '') {
+    $class[] = $layer['mdtclass'];
+  }
+  $vars['class'] = implode(' ', $class);
+
+  # Generate layer link
+  if (isset($layer['link']) && is_array($layer['link'])) {
+    $link = $layer['link'];
+    if (strpos($link['value'], 'http') === FALSE && strpos($link["value"], "#") !== 0) {
+      $url = parse_url($link['value']);
+      $options = array();
+      $options['absolute'] = TRUE;
+      if (isset($url['fragment'])) {
+        $options['fragment'] = $url['fragment'];
+      }
+
+      if (isset($url['query'])) {
+        parse_str($url['query'], $query);
+        $options['query'] = $query;
+      }
+      $vars["link"] = Url::fromUserInput('/' .$url['path'], $options)->toString();
+    }
+    else {
+      $vars["link"] = $link['value'];
+    }
+  }
+  if (isset($layer["opacity"]) && intval($layer["opacity"]) != 100) {
+    $percent = intval($layer["opacity"]) / 100;
+    $layer["opacity"] = "-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity={$layer["opacity"]})'; filter: alpha(opacity={$layer["opacity"]}); opacity: {$percent};";
+  }
+  else {
+    $layer["opacity"] = "";
+  }
+  $vars['layer'] = $layer;
+}
+
+
+/**
+ * Implements hook_library_info_alter().
+ */
+function md_slider_library_info_alter(&$libraries, $extension) {
+  if ($extension == 'md_slider') {
+    $destination_dir = 'public://md-slider-css';
+    $sliders = MDSliderDataBase::loadAll('md_sliders');
+
+    foreach ($sliders as $index => $slider) {
+      $settings = unserialize($slider->settings);
+      $libraries['md_slider.slider.' . $slider->machine_name]['css']['component'][$settings['dmf_google']] = array(
+        'type' => 'external'
+      );
+
+      $file_uri = $destination_dir . "/md-slider-{$slider->machine_name}-layers.css";
+      $file_url = file_url_transform_relative($file_uri);
+      $libraries['md_slider.slider.' . $slider->machine_name]['css']['component'][$file_url] = array();
+    }
+  }
+}

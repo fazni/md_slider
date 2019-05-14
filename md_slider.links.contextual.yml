@@ -1,0 +1,8 @@
+md_slider.block.configure:
+  title: 'Configure Slider'
+  route_name: md_slider.admin.configure
+  group: md_slider_block
+md_slider.block.edit:
+  title: 'Edit Slider'
+  route_name: md_slider.admin.edit
+  group: md_slider_block
